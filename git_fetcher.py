@@ -27,6 +27,11 @@ def parse_arguments():
         action="store_true",
         help="makes  verbose"
     )
+    parser.add_argument(
+        "--refresh", "-r",
+        action="store_true",
+        help="updates the repositories for the specified owner in the database",
+    )
     return parser.parse_args()
 
 def output_json(api_output, filename):
@@ -90,6 +95,12 @@ def list_repos(owner, cursor:sqlite3.Cursor):
     ''', (owner,))
     return cursor.fetchall()
 
+def delete_repos(owner, cursor):
+    cursor.execute('''
+    DELETE FROM repositories WHERE owner = ?
+''', (owner,))    
+
+
 if __name__ == "__main__":
     args = parse_arguments()
     if not args.owner:
@@ -112,14 +123,20 @@ if __name__ == "__main__":
         conn.close()
         exit(0)
 
+
     repo_content = request_repository(args.owner, args.verbose)
     if repo_content is None:
         print("Failed to fetch repository content.")
         exit(1)
+
     if args.verbose:
         print(f"Fetched content from {args.owner}")
+    if args.refresh:
+        if args.verbose:
+            print(f"Refreshing repositories for owner: {args.owner}")
+        delete_repos(args.owner, cursor)
 
-    json_data_parsed = json_parser(repo_content)
+    json_data_parsed = json_parser(repo_content, args.verbose)
     save_to_db(cursor, json_data_parsed)
 
     conn.commit()
