@@ -45,22 +45,24 @@ def connect_to_database():
         )''')
     return conn, cursor
 
-def request_repository(username):
+def request_repository(username, verbose):
     url = f"https://api.github.com/users/{username}/repos"
     try:
         response = requests.get(url)
         response.raise_for_status()
         return response.text
     except requests.RequestException as e:
-        print(f"Error fetching repository: {e}")
+        if verbose:
+            print(f"Error fetching repository: {e}")
         return None
 
-def json_parser(json_input):
+def json_parser(json_input, verbose):
     repos = []
     try:
         data = json.loads(json_input)
         for repo in data:
-            print(f"Repository Name: {repo['name']}, Language: {repo['language']}, URL: {repo['html_url']}")
+            if verbose:
+                print(f"Repository Name: {repo['name']}, Language: {repo['language']}, URL: {repo['html_url']}")
             repos.append({
                 "owner": repo.get("owner", {}).get("login"),
                 "name": repo.get("name"),
@@ -93,7 +95,8 @@ if __name__ == "__main__":
     if not args.owner:
         print("Error: --owner argument is required.")
         exit(1)
-    print(f"Git owner: {args.owner}")
+    if args.verbose:
+        print(f"Git owner: {args.owner}")
 
     conn, cursor = connect_to_database()
 
@@ -102,23 +105,19 @@ if __name__ == "__main__":
         for repo in repos:
             print(repo)
 
-    if args.output:
-        output_json(repos, args.owner)
-
+        if args.output:
+            output_json(repos, args.owner)
 
         cursor.close()
         conn.close()
         exit(0)
 
-    repo_content = request_repository(args.owner)
+    repo_content = request_repository(args.owner, args.verbose)
     if repo_content is None:
         print("Failed to fetch repository content.")
         exit(1)
     if args.verbose:
         print(f"Fetched content from {args.owner}")
-
-    if args.output:
-        output_json(repo_content, args.owner)
 
     json_data_parsed = json_parser(repo_content)
     save_to_db(cursor, json_data_parsed)
