@@ -1,6 +1,7 @@
 import argparse
 import sqlite3
 import requests
+import json
 
 
 def parse_arguments():
@@ -25,6 +26,13 @@ def output_json(api_output, filename):
 def connect_to_database():   
     conn = sqlite3.connect('repositories.db')
     cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS repositories (
+            id INTEGER PRIMARY KEY,
+            owner TEXT,
+            name TEXT,
+            language TEXT, 
+            html_url TEXT
+        )''')
     return conn, cursor
 
 def request_repository(username):
@@ -36,6 +44,26 @@ def request_repository(username):
     except requests.RequestException as e:
         print(f"Error fetching repository: {e}")
         return None
+
+def json_parser(json_input):
+    repos = []
+    try:
+        data = json.loads(json_input)
+        for repo in data:
+            print(f"Repository Name: {repo['name']}, Language: {repo['language']}, URL: {repo['html_url']}")
+            repos.append({
+                "owner": repo.get("owner", {}).get("login"),
+                "name": repo.get("name"),
+                "language": repo.get("language"),
+                "html_url": repo.get("html_url"),
+            }) 
+        return repos
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}") 
+        return []
+
+def save_to_db():
+    pass
 
 if __name__ == "__main__":
     args = parse_arguments()
@@ -54,3 +82,5 @@ if __name__ == "__main__":
 
     if args.output:
         output_json(repo_content, args.owner)
+
+    json_data_parsed = json_parser(repo_content)
