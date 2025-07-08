@@ -13,7 +13,12 @@ def parse_arguments():
         help="The owner of the Git acount to fetch.",
     )
     parser.add_argument(
-        "--output",
+        "--list", "-l",
+        action="store_true",
+        help="List the specified owner repos from db",
+    )
+    parser.add_argument(
+        "--output", "-o",
         action="store_true",
         help="If set, output the fetched repository content to a file.",
     )
@@ -31,7 +36,7 @@ def connect_to_database():
             owner TEXT,
             name TEXT,
             language TEXT, 
-            html_url TEXT
+            html_url TEXT UNIQUE
         )''')
     return conn, cursor
 
@@ -62,8 +67,15 @@ def json_parser(json_input):
         print(f"Error parsing JSON: {e}") 
         return []
 
-def save_to_db():
-    pass
+def save_to_db(cursor, parsed_data):
+    for data in parsed_data:
+        try:
+            cursor.execute(f'''
+                INSERT INTO repositories (owner, name, language, html_url)
+                VALUES (?, ?, ?, ?)
+            ''', (data['owner'], data['name'], data['language'], data['html_url']))
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
 
 if __name__ == "__main__":
     args = parse_arguments()
@@ -84,3 +96,8 @@ if __name__ == "__main__":
         output_json(repo_content, args.owner)
 
     json_data_parsed = json_parser(repo_content)
+
+    save_to_db(cursor, json_data_parsed)
+
+    conn.commit()
+    conn.close()
