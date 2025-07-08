@@ -36,7 +36,7 @@ def parse_arguments():
 
 def output_json(api_output, filename):
     with open(f"{filename}.json", "w") as file:
-        file.write(api_output)
+        json.dump(api_output, file, indent=4)
 
 def connect_to_database():   
     conn = sqlite3.connect('repositories.db')
@@ -138,6 +138,9 @@ if __name__ == "__main__":
 
     json_data_parsed = json_parser(repo_content, args.verbose)
     save_to_db(cursor, json_data_parsed)
+
+    if args.output:
+        output_json(json_data_parsed, args.owner)
 
     conn.commit()
     cursor.close()
