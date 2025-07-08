@@ -22,6 +22,11 @@ def parse_arguments():
         action="store_true",
         help="If set, output the fetched repository content to a file.",
     )
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="makes  verbose"
+    )
     return parser.parse_args()
 
 def output_json(api_output, filename):
@@ -70,12 +75,18 @@ def json_parser(json_input):
 def save_to_db(cursor, parsed_data):
     for data in parsed_data:
         try:
-            cursor.execute(f'''
+            cursor.execute('''
                 INSERT INTO repositories (owner, name, language, html_url)
                 VALUES (?, ?, ?, ?)
             ''', (data['owner'], data['name'], data['language'], data['html_url']))
         except sqlite3.Error as e:
             print(f"Error: {e}")
+
+def list_repos(owner, cursor:sqlite3.Cursor):
+    cursor.execute('''
+        SELECT * FROM repositories WHERE owner ==  ?
+    ''', (owner,))
+    return cursor.fetchall()
 
 if __name__ == "__main__":
     args = parse_arguments()
@@ -86,18 +97,32 @@ if __name__ == "__main__":
 
     conn, cursor = connect_to_database()
 
+    if args.list:
+        repos = list_repos(args.owner, cursor)
+        for repo in repos:
+            print(repo)
+
+    if args.output:
+        output_json(repos, args.owner)
+
+
+        cursor.close()
+        conn.close()
+        exit(0)
+
     repo_content = request_repository(args.owner)
     if repo_content is None:
         print("Failed to fetch repository content.")
         exit(1)
-    print(f"Fetched content from {args.owner}")
+    if args.verbose:
+        print(f"Fetched content from {args.owner}")
 
     if args.output:
         output_json(repo_content, args.owner)
 
     json_data_parsed = json_parser(repo_content)
-
     save_to_db(cursor, json_data_parsed)
 
     conn.commit()
+    cursor.close()
     conn.close()
