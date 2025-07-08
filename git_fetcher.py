@@ -1,6 +1,6 @@
 import argparse
 import sqlite3
-
+import requests
 
 
 def parse_arguments():
@@ -26,6 +26,15 @@ def connect_to_database():
     return conn, cursor
 
 
+def request_repository(repo_url):
+    try:
+        response = requests.get(repo_url)
+        response.raise_for_status()
+        return response.text
+    except requests.RequestException as e:
+        print(f"Error fetching repository: {e}")
+        return None
+
 if __name__ == "__main__":
     args = parse_arguments()
     if not args.repo:
@@ -34,3 +43,7 @@ if __name__ == "__main__":
     print(f"Repository URL: {args.repo}")
 
     conn, cursor = connect_to_database()
+
+    repo_content = request_repository(args.repo)
+    print(f"Fetched content from {args.repo}")
+    print(repo_content)
