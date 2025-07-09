@@ -33,6 +33,12 @@ def parse_arguments():
         help="updates the repositories for the specified owner in the database",
     )
     return parser.parse_args()
+    
+def check_owner_exists(cursor: sqlite3.Cursor, owner):
+    cursor.execute('''
+        SELECT * FROM repositories WHERE owner ==  ?
+    ''', (owner,))
+    return len(cursor.fetchall()) != 0
 
 def output_json(api_output, filename):
     with open(f"{filename}.json", "w") as file:
@@ -124,6 +130,16 @@ if __name__ == "__main__":
         exit(0)
 
 
+    if args.refresh:
+        if args.verbose:
+            print(f"Refreshing repositories for owner: {args.owner}")
+        delete_repos(args.owner, cursor)
+
+    owner_exists = check_owner_exists(cursor, args.owner)
+    if owner_exists:
+        print(f"Owner {args.owner} already exists in the database.  refresh to get new data")
+        exit(1)
+
     repo_content = request_repository(args.owner, args.verbose)
     if repo_content is None:
         print("Failed to fetch repository content.")
@@ -131,10 +147,7 @@ if __name__ == "__main__":
 
     if args.verbose:
         print(f"Fetched content from {args.owner}")
-    if args.refresh:
-        if args.verbose:
-            print(f"Refreshing repositories for owner: {args.owner}")
-        delete_repos(args.owner, cursor)
+
 
     json_data_parsed = json_parser(repo_content, args.verbose)
     save_to_db(cursor, json_data_parsed)
