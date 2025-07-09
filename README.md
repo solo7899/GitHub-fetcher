@@ -27,12 +27,13 @@ pip install -r requirements.txt
 Run the script from the command line:
 
 ```bash
-python git_fetcher.py --owner <github_username> [options]
+python git_fetcher.py <owner> [options]
 ```
+
+- `<owner>` (required): GitHub username to fetch repositories for (positional argument)
 
 ### Options
 
-- `--owner <username>` (required): GitHub username to fetch repositories for
 - `--list` or `-l`: List repositories for the owner from the database
 - `--output` or `-o`: Output listed or fetched repositories to a JSON file (`<owner>.json`)
 - `--refresh` or `-r`: Refresh (delete and re-fetch) repositories for the owner
@@ -50,31 +51,31 @@ python git_fetcher.py --owner <github_username> [options]
 Fetch and store repositories for a user:
 
 ```bash
-python git_fetcher.py --owner octocat
+python git_fetcher.py octocat
 ```
 
 List repositories for a user:
 
 ```bash
-python git_fetcher.py --owner octocat --list
+python git_fetcher.py octocat --list
 ```
 
 List and output to JSON:
 
 ```bash
-python git_fetcher.py --owner octocat --list --output
+python git_fetcher.py octocat --list --output
 ```
 
 Refresh repositories for a user:
 
 ```bash
-python git_fetcher.py --owner octocat --refresh
+python git_fetcher.py octocat --refresh
 ```
 
 Fetch and output to JSON:
 
 ```bash
-python git_fetcher.py --owner octocat --output
+python git_fetcher.py octocat --output
 ```
 
 ## Database

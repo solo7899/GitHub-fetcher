@@ -7,9 +7,8 @@ import json
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Fetch and process Git repositories.")
     parser.add_argument(
-        "--owner",
+        "owner",
         type=str,
-        required=True,
         help="The owner of the Git acount to fetch.",
     )
     parser.add_argument(
@@ -38,7 +37,8 @@ def check_owner_exists(cursor: sqlite3.Cursor, owner):
     cursor.execute('''
         SELECT * FROM repositories WHERE owner ==  ?
     ''', (owner,))
-    return len(cursor.fetchall()) != 0
+    # return len(cursor.fetchall()) != 0
+    return cursor.fetchone()
 
 def output_json(api_output, filename):
     with open(f"{filename}.json", "w") as file:
