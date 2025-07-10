@@ -144,6 +144,9 @@ if __name__ == "__main__":
     if repo_content is None:
         print("Failed to fetch repository content.")
         exit(1)
+    if len(repo_content)  <= 2:
+        print("No repositories found for the specified owner.")
+        exit(1)
 
     if args.verbose:
         print(f"Fetched content from {args.owner}")
